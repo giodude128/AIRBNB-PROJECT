@@ -2,44 +2,42 @@
 
 const { User } = require('../models');
 const bcrypt = require("bcryptjs");
+const user = require('../models/user');
 
 let options = {};
 if (process.env.NODE_ENV === 'production') {
   options.schema = process.env.SCHEMA;  // define your schema in options object
 }
 
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
+
     await User.bulkCreate([
       {
-        email: 'demo@user.io',
+        email: 'demo@user.com',
         firstName: 'Demo',
         lastName: 'User',
-        username: 'Demo-lition',
-        hashedPassword: bcrypt.hashSync('password')
+        username: 'Demo-lisher',
+        hashedPassword: bcrypt.hashSync('demopass')
       },
       {
-        email: 'user1@user.io',
-        firstName: 'Demo',
-        lastName: 'User',
-        username: 'FakeUser1',
-        hashedPassword: bcrypt.hashSync('password2')
-      },
-      {
-        email: 'user2@user.io',
-        firstName: 'Demo',
-        lastName: 'User',
-        username: 'FakeUser2',
-        hashedPassword: bcrypt.hashSync('password3')
+        email: 'email@email.email',
+        firstName: 'User',
+        lastName: 'name',
+        username: 'username',
+        hashedPassword: bcrypt.hashSync('hashedpass')
       }
-    ], { validate: true });
+    ], { validate: true })
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
+
     options.tableName = 'Users';
     const Op = Sequelize.Op;
+
     return queryInterface.bulkDelete(options, {
-      username: { [Op.in]: ['Demo-lition', 'FakeUser1', 'FakeUser2'] }
+      username: { [Op.in]: ['Demo-lisher', 'username'] }
     }, {});
   }
 };
