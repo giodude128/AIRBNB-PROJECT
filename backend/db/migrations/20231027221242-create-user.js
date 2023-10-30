@@ -52,10 +52,11 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    // Remove the foreign key constraint
+
     await queryInterface.removeConstraint('Users', 'Users_ownerId_fkey');
 
-    // Drop the Users table
-    return queryInterface.dropTable('Users');
+
+    options.tableName = "Users";
+    return queryInterface.dropTable(options);
   }
 };
