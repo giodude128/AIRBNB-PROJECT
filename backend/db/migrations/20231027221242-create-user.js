@@ -50,7 +50,11 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    options.tableName = "Users"
-    return queryInterface.dropTable(options);
+    // First, remove the foreign key constraints from the "Spots" and "Bookings" tables
+    await queryInterface.removeConstraint('Spots', 'Spots_ownerId_fkey');
+    await queryInterface.removeConstraint('Bookings', 'Bookings_userId_fkey');
+
+    // Then, drop the "Users" table
+    await queryInterface.dropTable('Users');
   }
 };
