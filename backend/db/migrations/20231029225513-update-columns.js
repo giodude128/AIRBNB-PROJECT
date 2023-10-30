@@ -9,24 +9,24 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-  //   await queryInterface.addColumn('ReviewImages', 'reviewId', {
-  //     type: Sequelize.INTEGER,
-  //     references: {
-  //       model: 'Reviews'
-  //     }
-  //   })
-  //   await queryInterface.addColumn('SpotImages', 'spotId', {
-  //     type: Sequelize.INTEGER,
-  //     references: {
-  //       model: 'Spots'
-  //     }
-  //   })
-  //   await queryInterface.addColumn('Spots', 'ownerId', {
-  //     type: Sequelize.INTEGER,
-  //     references: {
-  //       model: 'Users'
-  //     }
-  //   })
+    await queryInterface.addColumn('ReviewImages', 'reviewId', {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'Reviews'
+      }
+    })
+    await queryInterface.addColumn('SpotImages', 'spotId', {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'Spots'
+      }
+    })
+    await queryInterface.addColumn('Spots', 'ownerId', {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'Users'
+      }
+    })
   },
 
   async down (queryInterface, Sequelize) {
