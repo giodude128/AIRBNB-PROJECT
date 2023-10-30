@@ -44,7 +44,8 @@ module.exports = {
     }, options);
   },
   async down(queryInterface, Sequelize) {
-    options.tableName = "Reviews";
-    return queryInterface.dropTable(options);
+    await queryInterface.removeConstraint('Users', 'Reviews_userId_fkey');
+
+    return queryInterface.dropTable('Reviews');
   }
 };
