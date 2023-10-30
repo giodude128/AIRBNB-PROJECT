@@ -5,7 +5,6 @@ if (process.env.NODE_ENV === 'production') {
   options.schema = process.env.SCHEMA;  // define your schema in options object
 }
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('Users', {
@@ -15,6 +14,11 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      username: {
+        type: Sequelize.STRING(30),
+        allowNull: false,
+        unique: true
+      },
       firstName: {
         type: Sequelize.STRING(30),
         allowNull: false
@@ -22,11 +26,6 @@ module.exports = {
       lastName: {
         type: Sequelize.STRING(30),
         allowNull: false
-      },
-      username: {
-        type: Sequelize.STRING(30),
-        allowNull: false,
-        unique: true
       },
       email: {
         type: Sequelize.STRING(256),
@@ -40,21 +39,18 @@ module.exports = {
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
-    });
+    }, options);
   },
-  async down(queryInterface, Sequelize) {
-    // First, remove the foreign key constraints from the "Spots" and "Bookings" tables
-    await queryInterface.removeConstraint('Spots', 'Spots_ownerId_fkey');
-    await queryInterface.removeConstraint('Bookings', 'Bookings_userId_fkey');
 
-    // Then, drop the "Users" table
-    await queryInterface.dropTable('Users');
+  async down(queryInterface, Sequelize) {
+    options.tableName = "Users";
+    return queryInterface.dropTable(options);
   }
 };
