@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === 'production') {
 module.exports = {
   async up(queryInterface, Sequelize) {
 
-    
+
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
@@ -52,7 +52,10 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Users";
-    return queryInterface.dropTable(options);
+    // Remove the foreign key constraint
+    await queryInterface.removeConstraint('Users', 'Users_ownerId_fkey');
+
+    // Drop the Users table
+    return queryInterface.dropTable('Users');
   }
 };
