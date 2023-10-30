@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "userId"
       })
       Spot.belongsTo(models.User, {
-        foreignKey: 'userId'
+        foreignKey: 'ownerId'
       })
       Spot.hasMany(models.SpotImage, {
         foreignKey: 'spotId'
