@@ -49,6 +49,10 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
+    // First, remove the foreign key constraint from the "Reviews" table
+    await queryInterface.removeConstraint('Reviews', 'Reviews_spotId_fkey');
+
+    // Then, drop the "Spots" table
     await queryInterface.dropTable('Spots');
   }
 };
