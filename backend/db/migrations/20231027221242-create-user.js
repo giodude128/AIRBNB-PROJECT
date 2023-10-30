@@ -7,6 +7,10 @@ if (process.env.NODE_ENV === 'production') {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+
+    await queryInterface.removeConstraint('Spots', 'Spots_ownerId_fkey');
+    await queryInterface.removeConstraint('Bookings', 'Bookings_userId_fkey');
+
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
@@ -50,7 +54,32 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Users";
-    return queryInterface.dropTable(options);
-  }
+    options.tableName = 'Users';
+
+    // First, drop the "Users" table
+    await queryInterface.dropTable(options);
+
+    // Then, re-add the foreign key constraints if needed
+    await queryInterface.addConstraint('Spots', {
+      fields: ['ownerId'],
+      type: 'foreign key',
+      name: 'Spots_ownerId_fkey',
+      references: {
+        table: 'Users',
+        field: 'id',
+      },
+      onDelete: 'CASCADE',
+    });
+
+    await queryInterface.addConstraint('Bookings', {
+      fields: ['userId'],
+      type: 'foreign key',
+      name: 'Bookings_userId_fkey',
+      references: {
+        table: 'Users',
+        field: 'id',
+      },
+      onDelete: 'CASCADE',
+    });
+  },
 };
