@@ -14,7 +14,7 @@ module.exports = {
         country: 'USA',
         lat: 23.56,
         lng: 56.34,
-        name: 'GIO',
+        name: 'Gio',
         description: 'somewhere',
         price: 850000
       },
@@ -49,7 +49,7 @@ module.exports = {
     options.tableName = 'Spots';
     const Op = Sequelize.Op;
     return queryInterface.bulkDelete(options, {
-      ownerId: { [Op.in]: ['1', '2', '3'] }
+      name: { [Op.in]: ['Gio', 'Light', 'Z'] }
     }, {});
   }
 };
