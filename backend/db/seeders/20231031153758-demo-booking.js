@@ -1,9 +1,11 @@
 'use strict';
 
+const { Booking } = require('../models');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    await User.bulkCreate([
+    await Booking.bulkCreate([
       {
         spotId: 1,
         userId: 11,
