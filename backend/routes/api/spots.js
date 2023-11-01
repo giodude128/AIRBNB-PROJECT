@@ -194,42 +194,37 @@ router.post('/:spotId/images', requireAuth, async (req, res) => {
     await newSpotImage.save()
     res.status(200).json(img)
 })
-//edit a Spot
-router.put("/:id", spotCheck, requireAuth, async (req, res) => {
-    let spot = await Spot.findByPk(req.params.id)
+
+
+router.put('/:spotId', checkSpotDetails, requireAuth, async (req, res) => {
+    const spot = await Spot.findByPk(req.params.spotId)
+    const { address, city, state, country, lat, lng, name, description, price } = req.body
+    const { user } = req
     if (!spot) {
         res.status(404).json({
             message: "Spot couldn't be found",
-            statusCode: 404
         })
     }
-        const { id, address, city, state, country, lat, lng, name, description, price, createdAt, updatedAt} = req.body;
-        const { user } = req
     if (spot.ownerId !== user.id) {
-        res.json({
-            message: "Validation error",
-            statusCode: 400,
+        res.status(400).json({
+            message: "Bad Request"
         })
     }
-    spot.id = id,
-    spot.address = address,
-    spot.city = city,
-    spot.state = state,
-    spot.country = country,
-    spot.lat = lat,
-    spot.lng = lng,
-    spot.name = name,
-    spot.description = description,
+
+    spot.address = address
+    spot.city = city
+    spot.state = state
+    spot.country = country
+    spot.lat = lat
+    spot.lng = lng
+    spot.name = name
+    spot.description = description
     spot.price = price
 
-        let updatedSpot = {id: spot.id, ownerId: user.id, address, city, state,
-            country, lat, lng, name, description, price, createdAt: spot.createdAt,
-            updatedAt:spot.updatedAt}
-        await spot.save()
-        res.status(200).json(updatedSpot)
 
+    await spot.save()
+    res.status(200).json(spot)
 })
-
 
 
 
