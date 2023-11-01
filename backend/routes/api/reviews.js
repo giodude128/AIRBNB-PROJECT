@@ -8,7 +8,7 @@ const router = express.Router()
 
 //get all reviews of CU
 
-router.get('/current', requireAuth, async (req, res) => {
+router.get('/reviews/current', requireAuth, async (req, res) => {
     const { user } = req
     const currUserRevs = await Review.findAll({
         where: {
