@@ -196,5 +196,61 @@ router.post('/:spotId/images', requireAuth, async (req, res) => {
 })
 
 
+// Edit a Spot
+router.put('/api/spots/:spotId', async (req, res) => {
+    const { address, city, state, country, lat, lng, name, description, price } = req.body;
+    const spotId = req.params.spotId;
+    const userId = req.user.id; // Assuming you have user authentication middleware
+
+    try {
+      // Find the spot by ID
+      const spot = await Spot.findByPk(spotId);
+
+      // Check if the spot exists
+      if (!spot) {
+        return res.status(404).json({ message: "Spot couldn't be found" });
+      }
+
+      // Check if the spot belongs to the current user
+      if (spot.ownerId !== userId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      // Update the spot's information
+      spot.address = address;
+      spot.city = city;
+      spot.state = state;
+      spot.country = country;
+      spot.lat = lat;
+      spot.lng = lng;
+      spot.name = name;
+      spot.description = description;
+      spot.price = price;
+
+      // Save the updated spot
+      await spot.save();
+
+      // Return the updated spot
+      res.status(200).json({
+        id: spot.id,
+        ownerId: spot.ownerId,
+        address: spot.address,
+        city: spot.city,
+        state: spot.state,
+        country: spot.country,
+        lat: spot.lat,
+        lng: spot.lng,
+        name: spot.name,
+        description: spot.description,
+        price: spot.price,
+        createdAt: spot.createdAt,
+        updatedAt: spot.updatedAt,
+      });
+    } catch (error) {
+      return res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
+
+
 
 module.exports = router
