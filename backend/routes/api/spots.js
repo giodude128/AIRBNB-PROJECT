@@ -195,4 +195,6 @@ router.post('/:spotId/images', requireAuth, async (req, res) => {
     res.status(200).json(img)
 })
 
+
+
 module.exports = router

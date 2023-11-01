@@ -76,7 +76,6 @@ router.post(
         username: user.username,
     };
 
-
       await setTokenCookie(res, safeUser);
 
       return res.json({
@@ -84,5 +83,56 @@ router.post(
       });
     }
   );
+
+
+  // Log in a user
+router.post('/api/session', async (req, res) => {
+  const { credential, password } = req.body;
+
+  try {
+    // Validate the request body
+    if (!credential || !password) {
+      return res.status(400).json({
+        message: 'Bad Request',
+        errors: {
+          credential: 'Email or username is required',
+          password: 'Password is required',
+        },
+      });
+    }
+
+    // Find the user by email or username
+    const user = await User.findOne({
+      where: {
+        [User.sequelize.Op.or]: [{ email: credential }, { username: credential }],
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check the password
+    if (!bcrypt.compareSync(password, user.hashedPassword)) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Successful login
+    const userData = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      username: user.username,
+    };
+
+    return res.status(200).json({ user: userData });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+
 
 module.exports = router;
