@@ -6,9 +6,10 @@ const { handleValidationErrors } = require('../../utils/validation');
 const router = express.Router()
 
 
+
 //get all reviews of CU
 
-router.get('/reviews/current', requireAuth, async (req, res) => {
+router.get('/current', requireAuth, async (req, res) => {
     const { user } = req
     const currUserRevs = await Review.findAll({
         where: {
@@ -74,75 +75,49 @@ router.put('/:reviewId', requireAuth, async (req, res, next) => {
 })
 
 
-module.exports = router
+//add an image to a review from reviewId
 
-
-// create Image for a Review
-router.post("/:id/images", requireAuth, async (req, res) => {
-    const review = await Review.findByPk(req.params.id)
+router.post('/:reviewId/images', requireAuth, async (req, res) => {
+    const review = await Review.findByPk(req.params.reviewId)
     const { user } = req
     if (!review) {
-        res.status(404).json({
-            message: "Review couldn't be found",
-            statusCode: 404
-    })
+        res.status(404).json({ message: "Review couldn't be found" })
     }
     if (review.userId !== user.id) {
-        res.json({
-            message: "Validation error",
-            statusCode: 400,
-        })
+        res.status(400).json({ message: "Bad request" })
     }
-
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
-    const prevImgsArr = await Image.findAll({
+    const otherRevImgs = await ReviewImage.findAll({
         where: { reviewId: review.id }
     })
 
-    if (preview === true) {
-        spot.previewImage = url
-    }
+    if (preview === true) spot.previewImage = url
 
-    if (prevImgsArr.length > 9) {
-        return res.status(403).json({
-            message: "Maximum number of images for this resource was reached",
-            statusCode: 403
-        })
+    if (otherRevImgs.length > 9) {
+        res.status(403).json({ message: "Maximum number of images for this resource was reached" })
     } else {
-        const newReviewImage = await spot.createImage({
-            url, reviewId: +req.params.id
+        let newRevImg = await review.createReviewImage({
+            url, reviewId: req.params.reviewId
         })
-        let id = newReviewImage.id
-        newReviewImage.url = url
-        let img = { id, url}
-        res.status(200).json(img)
+        res.status(200).json(newRevImg)
     }
-});
+})
 
-//Delete a Review-----------------------------------
-router.delete('/:id', requireAuth, async (req, res) => {
-    let review = await Review.findByPk(req.params.id)
-    if (!review) {
-        res.status(404).json({
-            message: "Review couldn't be found",
-            statusCode: 404
-        })
-    }
+
+//delete a review
+
+router.delete('/:reviewId', requireAuth, async (req, res) => {
+    let review = await Review.findByPk(req.params.reviewId)
     const { user } = req
+    if (!review) {
+        res.status(404).json({ message: "Review couldn't be found" })
+    }
     if (review.userId !== user.id) {
-        res.json({
-            message: "Validation error",
-            statusCode: 400,
-        })
+        res.status(400).json({ message: "Bad Request" })
     }
     await review.destroy()
-    res.status(200).json({
-        message: "Successfully deleted",
-        statusCode: 200
-    })
-});
+    res.status(200).json({ message: "Successfully deleted" })
+})
 
-
-
-module.exports = router;
+module.exports = router
