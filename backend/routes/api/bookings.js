@@ -1,18 +1,10 @@
 const express = require('express')
-const { requireAuth } = require('../../utils/auth');
-const {User, Spot, Booking} = require('../../db/models');
-const router = express.Router();
-
+const { Spot, Review, User, SpotImage, Booking, ReviewImage } = require('../../db/models');
+const { requireAuth } = require('../../utils/auth')
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
+const router = express.Router()
 
-
-//-------------for date Range ---------------
-const Moment = require('moment');
-const MomentRange = require('moment-range');
-
-const moment = MomentRange.extendMoment(Moment);
-//---------------------------------------------
 
 
 //get all current User's Bookings--------------------------------------
@@ -32,7 +24,7 @@ router.get('/current', requireAuth, async (req, res) => {
 });
 
 //edit a Booking-------------------------------------------------------
-router.put('/:bookingId', requireAuth ,async (req, res) => {
+router.put('/:id', requireAuth ,async (req, res) => {
     let booking = await Booking.findByPk(req.params.id)
     if(!booking) {
         res.status(404).json({
@@ -94,7 +86,7 @@ router.put('/:bookingId', requireAuth ,async (req, res) => {
 });
 
 //delete a Booking-----------------------------------------------------
-router.delete('/:bookingId', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
     let booking = await Booking.findByPk(req.params.id)
     if(!booking) {
         res.status(404).json({
@@ -122,6 +114,4 @@ router.delete('/:bookingId', requireAuth, async (req, res) => {
         message: "Successfully deleted"
     })
 });
-
-
 module.exports = router;
