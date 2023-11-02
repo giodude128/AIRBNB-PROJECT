@@ -1,9 +1,14 @@
+
+
+
 const express = require('express')
 const { Spot, Review, User, SpotImage, Booking, ReviewImage } = require('../../db/models');
 const { requireAuth } = require('../../utils/auth')
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
 const router = express.Router()
+
+
 
 
 
@@ -22,6 +27,14 @@ router.get('/current', requireAuth, async (req, res) => {
         "Bookings": currentUserBookings
     })
 });
+
+
+
+
+
+
+
+
 
 //edit a Booking-------------------------------------------------------
 router.put('/:id', requireAuth ,async (req, res) => {
