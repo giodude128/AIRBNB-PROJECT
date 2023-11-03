@@ -72,13 +72,6 @@ module.exports = (sequelize, DataTypes) => {
     price: {
       type: DataTypes.DECIMAL,
       allowNull: false
-    },
-    avgRating: {
-      type: DataTypes.INTEGER,
-
-    },
-    previewImage: {
-      type: DataTypes.STRING,
     }
 
   }, {

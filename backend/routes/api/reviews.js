@@ -44,37 +44,6 @@ router.get('/current', requireAuth, async (req, res) => {
 })
 
 
-//edit a review
-
-router.put('/:reviewId', requireAuth, async (req, res, next) => {
-    const revs = await Review.findByPk(req.params.reviewId)
-    const { user } = req
-    if (!revs) {
-        res.status(404).json({ message: "Review couldn't be found" })
-    }
-    if (revs.userId !== user.id) {
-        res.status(400).json({ message: "Can only edit your own reviews" })
-    }
-
-    const { review, stars } = req.body
-
-    let errors = []
-
-    if (!req.body.review) errors.push("Review text is required")
-    if (req.body.stars > 5 || req.body.stars < 1 || !stars) errors.push("Stars must be an integer from 1 to 5")
-    if (errors.length > 0) {
-        const error = new Error("Validation error")
-        err.statusCode = 400
-        error.errors = errors
-        return next(error)
-    }
-    revs.review = review
-    revs.stars = stars
-    await revs.save()
-    res.status(200).json(revs)
-})
-
-
 //add an image to a review from reviewId
 
 router.post('/:reviewId/images', requireAuth, async (req, res) => {
@@ -84,7 +53,7 @@ router.post('/:reviewId/images', requireAuth, async (req, res) => {
         res.status(404).json({ message: "Review couldn't be found" })
     }
     if (review.userId !== user.id) {
-        res.status(400).json({ message: "Bad request" })
+        res.status(400).json({ message: "Forbidden" })
     }
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
@@ -105,6 +74,41 @@ router.post('/:reviewId/images', requireAuth, async (req, res) => {
 })
 
 
+
+//edit a review
+
+
+router.put('/:reviewId', requireAuth, async (req, res, next) => {
+    const revs = await Review.findByPk(req.params.reviewId)
+    const { user } = req
+    if (!revs) {
+        return res.status(404).json({ message: "Review couldn't be found" })
+    }
+    if (revs.userId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" })
+    }
+
+    const { review, stars } = req.body
+
+    let errors = []
+
+    if (!req.body.review) errors.push("Review text is required")
+    if (req.body.stars > 5 || req.body.stars < 1 || !stars) errors.push("Stars must be an integer from 1 to 5")
+    if (errors.length > 0) {
+        return res.status(400).json({
+            message: "Bad Request", errors: {
+                review: errors[0],
+                stars: errors[1]
+            }
+        })
+    }
+    revs.review = review
+    revs.stars = stars
+    await revs.save()
+    res.status(200).json(revs)
+})
+
+
 //delete a review
 
 router.delete('/:reviewId', requireAuth, async (req, res) => {
@@ -114,7 +118,7 @@ router.delete('/:reviewId', requireAuth, async (req, res) => {
         res.status(404).json({ message: "Review couldn't be found" })
     }
     if (review.userId !== user.id) {
-        res.status(400).json({ message: "Bad Request" })
+        res.status(400).json({ message: "Forbidden" })
     }
     await review.destroy()
     res.status(200).json({ message: "Successfully deleted" })
