@@ -1,40 +1,25 @@
 const express = require('express')
-const { requireAuth } = require('../../utils/auth');
+const { Spot, Review, User, SpotImage, Booking, ReviewImage } = require('../../db/models');
+const { requireAuth } = require('../../utils/auth')
+const router = express.Router()
 
-const { Spot, User, Image, Review} = require("../../db/models");
-
-const sequelize = require('sequelize')
-const Op = sequelize.Op
-const router = express.Router();
-
-//Delet a Spot Image
-router.delete("/:imageId", requireAuth, async(req, res) => {
-    const image = await Image.findByPk(req.params.id,
-        {
-            include: {model:Spot}
-        })
-    if (!image || !image.Spot) {
-        res.status(404).json({
-            message: "Spot Image couldn't be found",
-            statusCode: 404
-        })
-        return
-    }
+router.delete("/:imageId", requireAuth, async (req, res) => {
     const { user } = req
-
-    if (image.Spot.ownerId !== user.id) {
-        res.json({
-            message: "Validation error",
-            statusCode: 400,
-        })
+    const img = await SpotImage.findByPk(req.params.imageId, {
+        include: { model: Spot, attributes: ['ownerId'] }
+    })
+    if (!img || !img.Spot) {
+        res.status(404).json({ message: "Spot Image couldn't be found" })
         return
     }
-    await image.destroy()
-    res.status(200).json({
-        message: "Successfully deleted",
-        statusCode: 200
-    })
-});
 
+    if (img.Spot.ownerId !== user.id) {
+        res.status(403).json({ message: "Forbidden" })
+        return
+    }
 
-module.exports = router;
+    await img.destroy()
+    res.status(200).json({ message: "Successfully deleted" })
+})
+
+module.exports = router
