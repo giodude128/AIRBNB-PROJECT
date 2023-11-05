@@ -21,7 +21,8 @@ module.exports = {
         lng: 56.34,
         name: 'Gio',
         description: 'somewhere',
-        price: 850000
+        price: 850000,
+        previewImage: 'its a SpotImage'
       },
       {
         ownerId: 2,
@@ -33,7 +34,8 @@ module.exports = {
         lng: 56.67,
         name: 'Light',
         description: 'where',
-        price: 650000
+        price: 650000,
+        previewImage: 'its a SpotImage'
       },
       {
         ownerId: 3,
@@ -45,9 +47,10 @@ module.exports = {
         lng: 86.34,
         name: 'Z',
         description: 'idk',
-        price: 950000
+        price: 950000,
+        previewImage: 'its a SpotImage'
       }
-    ], options, { validate: true });
+    ], { validate: true });
   },
 
   async down (queryInterface, Sequelize) {

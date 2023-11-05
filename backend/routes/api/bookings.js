@@ -16,32 +16,25 @@ const { handleValidationErrors } = require('../../utils/validation');
 
 //get all current User's Bookings--------------------------------------
 router.get('/current', requireAuth, async (req, res) => {
-    const { user } = req;
-    const currentUserBookings = await Booking.findAll({
-        where: {userId: user.id},
-        include: {model: Spot, attributes: [
-            "id", "ownerId", "address", "city", "state", "country",
-            "lat", "lng", "name", "price"
-        ], include: {model: SpotImage, where: {
-            preview: true,
-
-        }, limit: 1
-     }},
+    const { user } = req
+    const currUserBookings = await Booking.findAll({
+        where: { userId: user.id },
+        include: {
+            model: Spot, attribute: [
+                'id', 'ownerId', 'address', 'city', 'state', 'country', 'lat', 'lng', 'name', 'price', 'previewImage'
+            ]
+        }
     })
-    // console.log(currentUserBookings)
-    let bookingsPayload = []
-    for (let booking of currentUserBookings) {
-        booking = booking.toJSON()
-        booking.Spot.previewImage = booking.Spot.SpotImages[0].url
-        delete booking.Spot.SpotImages
-        // console.log(booking.Spot)
-        bookingsPayload.push(booking)
-    }
+    // Convert lat, lng, and price to numbers in each Spot
+    currUserBookings.forEach((booking) => {
+        const spot = booking.Spot;
+        spot.lat = parseFloat(spot.lat);
+        spot.lng = parseFloat(spot.lng);
+        spot.price = parseFloat(spot.price);
+    });
+    res.status(200).json({ Bookings: currUserBookings })
+})
 
-    res.status(200).json({
-        "Bookings": bookingsPayload
-    })
-});
 
 
 

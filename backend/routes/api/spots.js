@@ -7,33 +7,55 @@ const { handleValidationErrors } = require('../../utils/validation');
 const queryFilters = require("../../utils/queryfilters");
 
 //error middleware for checking spots
-const checkSpotDetails = (req, res, next) => {
-    let errors = []
-
-    if (!req.body.address) errors.push("Street address is required")
-    if (!req.body.city) errors.push("City is required")
-    if (!req.body.state) errors.push("State is required")
-    if (!req.body.country) errors.push("Country is required")
-    if (!req.body.lat) errors.push("Latitude is not valid")
-    if (!req.body.lng) errors.push("Longitude is not valid")
-    if (!req.body.name) errors.push("Name must be less than 50 characters")
-    if (!req.body.description) errors.push("Description is required")
-    if (!req.body.price) errors.push("Price per day is required")
-
-    if (errors.length > 0) {
-        const err = new Error('Validation Error')
-        err.statusCode = 400
-        err.errors = errors
-        return next(err)
-    }
-    next()
-}
-
+const checkSpotDetails = [
+    check('address')
+        .exists({ checkFalsy: true })
+        .notEmpty()
+        .withMessage("Street address is required"),
+    check('city')
+        .exists({ checkFalsy: true })
+        .notEmpty()
+        .withMessage("City is required"),
+    check('state')
+        .exists({ checkFalsy: true })
+        .notEmpty()
+        .withMessage("State is required"),
+    check('country')
+        .exists({ checkFalsy: true })
+        .notEmpty()
+        .withMessage("Country is required"),
+    check('lat')
+        .exists({ checkFalsy: true })
+        .isFloat({ min: -90, max: 90 })
+        .withMessage("Latitude is not valid"),
+    check('lng')
+        .exists({ checkFalsy: true })
+        .isFloat({ min: -180, max: 180 })
+        .withMessage("Longitude is not valid"),
+    check('name')
+        .exists({ checkFalsy: true })
+        .notEmpty()
+        .withMessage("Name is required"),
+    check('name')
+        .isLength({ max: 50 })
+        .withMessage("Name must be less than 50 character"),
+    check('description')
+        .exists({ checkFalsy: true })
+        .notEmpty()
+        .withMessage("Description is required"),
+    check('price')
+        .exists({ checkFalsy: true })
+        .notEmpty()
+        .isFloat({ min: 0 })
+        .withMessage("Price per day is required"),
+    handleValidationErrors
+]
 
 
 
 
 router.get("/", queryFilters, async (req, res) => {
+    const timeZone = 'EST'
     const {
         limit,
         offset,
@@ -60,14 +82,21 @@ router.get("/", queryFilters, async (req, res) => {
         offset,
     });
 
-    const spotsJSON = spots.map((ele) => ele.toJSON());
+    const spotsJSON = spots.map((ele) => {
+        const spotData = ele.toJSON()
+        spotData.lat = parseFloat(spotData.lat);
+        spotData.lng = parseFloat(spotData.lng);
+        spotData.price = parseFloat(spotData.price);
+        spotData.updatedAt = spotData.updatedAt.toLocaleString('en-US', { timeZone })
+        spotData.createdAt = spotData.createdAt.toLocaleString('en-US', { timeZone })
+        return spotData
+    });
 
     for (let i = 0; i < spotsJSON.length; i++) {
         if (spotsJSON[i].SpotImages[0]) {
             spotsJSON[i].previewImage = spotsJSON[i].SpotImages[0].url;
             delete spotsJSON[i].SpotImages;
         } else {
-            // If no image found, set previewImage to null or an empty string
             spotsJSON[i].previewImage = `No preview image`; // or spotsJSON[i].previewImage = '';
             delete spotsJSON[i].SpotImages;
         }
@@ -100,6 +129,7 @@ router.get("/", queryFilters, async (req, res) => {
 //Get all Spots owned by CU
 router.get('/current', requireAuth, async (req, res) => {
     const currentId = req.user.id
+    const timeZone = 'EST'
     const spots = await Spot.findAll({
         where: {
             ownerId: currentId,
@@ -118,14 +148,22 @@ router.get('/current', requireAuth, async (req, res) => {
         });
         let sum = starRatings.reduce((prevNum, currNum) => prevNum + currNum, 0)
         let avgRating = parseFloat((sum / starRatings.length).toFixed(2))
-        spot.avgRating = avgRating
+        spot.avgRating = avgRating ? avgRating : `Spot not rated`
         const spotImage = await SpotImage.findOne({ where: { spotId: spot.id } })
         if (spotImage) {
             spot.previewImage = spotImage.url;
+        } else {
+            spot.previewImage = `No preview image`
         }
         let rdel = spot.toJSON()
         delete rdel.Reviews
         delete rdel.SpotImages
+        rdel.lat = parseFloat(rdel.lat);
+        rdel.lng = parseFloat(rdel.lng);
+        rdel.price = parseFloat(rdel.price);
+        rdel.createdAt = rdel.createdAt.toLocaleString('en-US', { timeZone });
+        rdel.updatedAt = rdel.updatedAt.toLocaleString('en-US', { timeZone });
+
         return rdel
     });
 
@@ -172,11 +210,24 @@ router.get('/:spotId', async (req, res) => {
 
     const owner = await User.findByPk(spot.ownerId, { attributes: ['id', 'firstName', 'lastName'] })
 
-    if (spotImage.length) spot.previewImage = spotImage[0].url
+    if (spotImage.length >= 1) {
+        spot.previewImage = spotImage[0].url
+    } else {
+        spot.previewImage = `No preview image`
+    }
     spot.numReviews = numRevs
-    spot.avgRating = avgRating
+
+    spot.lat = parseFloat(spot.lat);
+    spot.lng = parseFloat(spot.lng);
+    spot.price = parseFloat(spot.price);
+    spot.createdAt = spot.createdAt.toLocaleString('en-US', { timeZone });
+    spot.updatedAt = spot.updatedAt.toLocaleString('en-US', { timeZone });
+
+
+    spot.avgRating = avgRating ? avgRating : `Spot not rated`
     spot.SpotImages = spotImage
     spot.Owner = owner
+
 
     res.status(200).json(spot)
 })
@@ -192,6 +243,7 @@ router.get('/:spotId', async (req, res) => {
 
 router.post('/', requireAuth, checkSpotDetails, async (req, res) => {
     const userId = req.user.id
+    const timeZone = 'EST'
     const { address, city, state, country, lat, lng, name, description, price } = req.body
     const newSpot = await Spot.create({
         ownerId: userId,
@@ -206,9 +258,12 @@ router.post('/', requireAuth, checkSpotDetails, async (req, res) => {
         price
     })
     let spot = newSpot.toJSON()
-    // if(spot.avgRating === null)
-    // delete spot.avgRating
-    // delete spot.previewImage
+    spot.lat = parseFloat(spot.lat);
+    spot.lng = parseFloat(spot.lng);
+    spot.price = parseFloat(spot.price);
+    spot.createdAt = spot.createdAt.toLocaleString('en-US', { timeZone });
+    spot.updatedAt = spot.updatedAt.toLocaleString('en-US', { timeZone });
+
     res.status(201).json({
         id: spot.id,
         ownerId: spot.ownerId,
@@ -220,7 +275,9 @@ router.post('/', requireAuth, checkSpotDetails, async (req, res) => {
         lng: spot.lng,
         name: spot.name,
         description: spot.description,
-        price: spot.price
+        price: spot.price,
+        updatedAt: spot.updatedAt,
+        createdAt: spot.createdAt
     })
 })
 
@@ -302,7 +359,22 @@ router.put('/:spotId', checkSpotDetails, requireAuth, async (req, res) => {
 
 
     await spot.save()
-    res.status(200).json(spot)
+    res.status(200).json({
+        id: spot.id,
+        ownerId: spot.ownerId,
+        address: spot.address,
+        city: spot.city,
+        state: spot.state,
+        country: spot.country,
+        lat: spot.lat,
+        lng: spot.lng,
+        name: spot.name,
+        description: spot.description,
+        price: spot.price,
+        updatedAt: spot.updatedAt.toLocaleString('en-US', { timeZone }),
+        createdAt: spot.createdAt.toLocaleString('en-US', { timeZone })
+
+    })
 })
 
 
@@ -346,9 +418,10 @@ router.delete("/:spotId", requireAuth, async (req, res) => {
 
 
 //Get Reviews by Spot Id---------------------------
+
 router.get('/:spotId/reviews', async (req, res) => {
     let spot = await Spot.findByPk(req.params.spotId)
-
+    const timeZone = "EST"
     if (!spot) {
         return res.status(404).json({ message: "Spot couldn't be found" })
     }
@@ -362,8 +435,17 @@ router.get('/:spotId/reviews', async (req, res) => {
             attributes: ['id', 'url']
         }]
     })
-    res.status(200).json({ Reviews: reviews })
+    // reviews.createdAt = reviews.createdAt.toLocaleString('en-US', { timeZone });
+    // reviews.updatedAt = reviews.updatedAt.toLocaleString('en-US', { timeZone });
+    const formatRevs = reviews.map((review) => ({
+        ...review.toJSON(),
+        createdAt: review.createdAt.toLocaleString('en-US', { timeZone }),
+        updatedAt: review.updatedAt.toLocaleString('en-US', { timeZone })
+    }))
+    res.status(200).json({ Reviews: formatRevs })
 })
+
+
 
 
 
@@ -408,6 +490,7 @@ router.post('/:spotId/reviews', requireAuth, async (req, res) => {
         return
     }
 
+
     if (currRev) {
         return res.status(500).json({ message: "User already has a review for this spot" })
     } else {
@@ -415,9 +498,19 @@ router.post('/:spotId/reviews', requireAuth, async (req, res) => {
             userId: user.id,
             spotId, review, stars
         })
-        return res.status(201).json(newRev)
-    }
+        newRev.createdAt = newRev.createdAt.toLocaleString('en-US', { timeZone });
+        newRev.updatedAt = newRev.updatedAt.toLocaleString('en-US', { timeZone });
 
+        return res.status(201).json({
+            id: newRev.id,
+            userId: newRev.userId,
+            spotId: newRev.spotId,
+            review: newRev.review,
+            stars: newRev.stars,
+            updatedAt: newRev.createdAt.toLocaleString('en-US', { timeZone }),
+            createdAt: newRev.updatedAt.toLocaleString('en-US', { timeZone })
+        })
+    }
 })
 
 
@@ -438,18 +531,18 @@ router.get('/:spotId/bookings', requireAuth, async (req, res) => {
         })
     }
 
-    if (spot.ownerId !== user.id) {
-        const bookings = await Booking.findAll({
-            where: {spotId: spot.id},
-            attributes: ['spotId', 'startDate', 'endDate']
-        })
-        res.status(200).json({Bookings: bookings})
-    }
-
     if (spot.ownerId === user.id) {
         const bookings = await Booking.findAll({
             where: {spotId: spot.id},
             include: {model: User, attributes: ['id','firstName','lastName']},
+        })
+        res.status(200).json({Bookings: bookings})
+    }
+
+    if (spot.ownerId !== user.id) {
+        const bookings = await Booking.findAll({
+            where: {spotId: spot.id},
+            attributes: ['spotId', 'startDate', 'endDate']
         })
         res.status(200).json({Bookings: bookings})
     }
@@ -608,7 +701,16 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
     body.spotId = spot.id;
 
     const newBooking = await Booking.create(body);
-    res.json(newBooking);
+    await newBooking.save()
+    const formattedBooking = {
+        ...newBooking.dataValues,
+        startDate: newBooking.startDate.toLocaleDateString('en-US', { timeZone }),
+        endDate: newBooking.endDate.toLocaleDateString('en-US', { timeZone }),
+        createdAt: newBooking.createdAt.toLocaleString('en-US', { timeZone }),
+        updatedAt: newBooking.updatedAt.toLocaleString('en-US', { timeZone }),
+    };
+
+    res.json(formattedBooking);
 });
 
 
