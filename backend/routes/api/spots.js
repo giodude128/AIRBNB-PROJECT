@@ -439,7 +439,6 @@ router.get('/:spotId/bookings', requireAuth, async (req, res) => {
             startDate: booking.startDate.toLocaleDateString(),
             endDate: booking.endDate.toLocaleDateString()
         }));
-
         return res.status(200).json({ Bookings: changedBookings });
     }
     if (spot.ownerId !== user.id) {
@@ -487,11 +486,12 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
         const currStartDate = new Date(currentBookings.startDate);
         const currEndDate = new Date(currentBookings.endDate);
 
-        if (newStart.getTime() === currEndDate.getTime()) {
+        if (newStart.getTime() === currStartDate.getTime() && newEnd.getTime() === currEndDate.getTime()) {
             return res.status(403).json({
                 message: "Sorry, this spot is already booked for the specified dates",
                 errors: {
-                    startDate: "Start date on an existing end date"
+                    startDate: "Start date conflicts with an existing booking",
+                    endDate: "End date conflicts with an existing booking"
                 }
             });
         }
@@ -505,11 +505,11 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
             });
         }
 
-        if (newEnd.getTime() < newStart.getTime()) {
-            return res.status(400).json({
-                message: "Bad Request",
+        if (newStart.getTime() === currEndDate.getTime()) {
+            return res.status(403).json({
+                message: "Sorry, this spot is already booked for the specified dates",
                 errors: {
-                    endDate: "End date cannot be before start date"
+                    startDate: "Start date on an existing end date"
                 }
             });
         }
@@ -523,12 +523,11 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
             });
         }
 
-        if (newStart.getTime() === currStartDate.getTime() && newEnd.getTime() === currEndDate.getTime()) {
+        if (newEnd.getTime() === currEndDate.getTime()) {
             return res.status(403).json({
                 message: "Sorry, this spot is already booked for the specified dates",
                 errors: {
-                    startDate: "Start date conflicts with an existing booking",
-                    endDate: "End date conflicts with an existing booking"
+                    endDate: "End date on an existing end date"
                 }
             });
         }
@@ -543,11 +542,11 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
             });
         }
 
-        if (newEnd.getTime() === currEndDate.getTime()) {
+        if (newStart >= currStartDate && newStart < currEndDate) {
             return res.status(403).json({
                 message: "Sorry, this spot is already booked for the specified dates",
                 errors: {
-                    endDate: "End date on an existing end date"
+                    startDate: "Start date during an existing booking"
                 }
             });
         }
@@ -561,11 +560,12 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
             });
         }
 
-        if (newStart >= currStartDate && newStart < currEndDate) {
+        if (newStart <= currStartDate && newEnd >= currEndDate) {
             return res.status(403).json({
                 message: "Sorry, this spot is already booked for the specified dates",
                 errors: {
-                    startDate: "Start date during an existing booking"
+                    startDate: "Start date conflicts with an existing booking",
+                    endDate: "End date conflicts with an existing booking"
                 }
             });
         }
@@ -580,6 +580,16 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
             }
         });
     }
+
+    if (newEnd.getTime() < newStart.getTime()) {
+        return res.status(400).json({
+            message: "Bad Request",
+            errors: {
+                endDate: "End date cannot be before start date"
+            }
+        });
+    }
+
 
 
     body.userId = userId;
