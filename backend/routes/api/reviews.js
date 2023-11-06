@@ -144,7 +144,7 @@ router.delete('/:reviewId', requireAuth, async (req, res) => {
         res.status(404).json({ message: "Review couldn't be found" })
     }
     if (reviewids.userId !== user.id) {
-        res.status(400).json({ message: "Forbidden" })
+        res.status(403).json({ message: "Forbidden" })
     }
     await reviewids.destroy()
     res.status(200).json({ message: "Successfully deleted" })
