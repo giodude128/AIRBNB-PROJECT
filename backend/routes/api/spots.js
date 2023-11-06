@@ -52,7 +52,7 @@ const checkSpotDetails = [
 
 
 router.get("/", queryFilters, async (req, res) => {
-    const timeZone = 'EST'
+
     const {
         limit,
         offset,
@@ -84,8 +84,7 @@ router.get("/", queryFilters, async (req, res) => {
         spotData.lat = parseFloat(spotData.lat);
         spotData.lng = parseFloat(spotData.lng);
         spotData.price = parseFloat(spotData.price);
-        spotData.updatedAt = spotData.updatedAt.toLocaleString('en-US', { timeZone })
-        spotData.createdAt = spotData.createdAt.toLocaleString('en-US', { timeZone })
+
         return spotData
     });
 
@@ -119,7 +118,7 @@ router.get("/", queryFilters, async (req, res) => {
 //Get all Spots owned by CU
 router.get('/current', requireAuth, async (req, res) => {
     const currentId = req.user.id
-    const timeZone = 'EST'
+
     const spots = await Spot.findAll({
         where: {
             ownerId: currentId,
@@ -151,8 +150,7 @@ router.get('/current', requireAuth, async (req, res) => {
         rdel.lat = parseFloat(rdel.lat);
         rdel.lng = parseFloat(rdel.lng);
         rdel.price = parseFloat(rdel.price);
-        rdel.createdAt = rdel.createdAt.toLocaleString('en-US', { timeZone });
-        rdel.updatedAt = rdel.updatedAt.toLocaleString('en-US', { timeZone });
+
 
         return rdel
     });
