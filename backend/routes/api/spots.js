@@ -5,8 +5,7 @@ const router = express.Router()
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
 const queryFilters = require("../../utils/queryfilters");
-
-//error middleware for checking spots
+//err middleware for checking spots
 const checkSpotDetails = [
     check('address')
         .exists({ checkFalsy: true })
@@ -52,8 +51,6 @@ const checkSpotDetails = [
 ]
 
 
-
-
 router.get("/", queryFilters, async (req, res) => {
     const timeZone = 'EST'
     const {
@@ -97,6 +94,7 @@ router.get("/", queryFilters, async (req, res) => {
             spotsJSON[i].previewImage = spotsJSON[i].SpotImages[0].url;
             delete spotsJSON[i].SpotImages;
         } else {
+            // If no image found, set previewImage to null or an empty string
             spotsJSON[i].previewImage = `No preview image`; // or spotsJSON[i].previewImage = '';
             delete spotsJSON[i].SpotImages;
         }
@@ -117,14 +115,6 @@ router.get("/", queryFilters, async (req, res) => {
 
     res.json({ Spots: spotsJSON, page: page, size: size });
 });
-
-
-
-
-
-
-
-
 
 //Get all Spots owned by CU
 router.get('/current', requireAuth, async (req, res) => {
@@ -175,17 +165,10 @@ router.get('/current', requireAuth, async (req, res) => {
 })
 
 
-
-
-
-
-
-
-
-
 router.get('/:spotId', async (req, res) => {
     let spot = await Spot.findByPk(req.params.spotId)
-    if (!spot) res.status(404).json({ message: "Spot couldn't be found" })
+    const timeZone = 'EST'
+    if (!spot) return res.status(404).json({ message: "Spot couldn't be found" })
     spot = spot.toJSON()
 
     //numReviews
@@ -228,18 +211,10 @@ router.get('/:spotId', async (req, res) => {
     spot.SpotImages = spotImage
     spot.Owner = owner
 
-
     res.status(200).json(spot)
 })
 
-
-
-
-
-
-
-
-
+//create a new spot
 
 router.post('/', requireAuth, checkSpotDetails, async (req, res) => {
     const userId = req.user.id
@@ -258,11 +233,12 @@ router.post('/', requireAuth, checkSpotDetails, async (req, res) => {
         price
     })
     let spot = newSpot.toJSON()
+    // if(spot.avgRating === null)
+    // delete spot.avgRating
+    // delete spot.previewImage
     spot.lat = parseFloat(spot.lat);
     spot.lng = parseFloat(spot.lng);
     spot.price = parseFloat(spot.price);
-    spot.createdAt = spot.createdAt.toLocaleString('en-US', { timeZone });
-    spot.updatedAt = spot.updatedAt.toLocaleString('en-US', { timeZone });
 
     res.status(201).json({
         id: spot.id,
@@ -282,35 +258,18 @@ router.post('/', requireAuth, checkSpotDetails, async (req, res) => {
 })
 
 
-
-
-
-
-
-
-//get all images
-router.get("/:spotId/images",  async (req, res) => {
-    const images = await Image.findAll()
-    res.status(200).json(images)
-})
-
-
-
-
-
-
 //create image for a spot
 
 router.post('/:spotId/images', requireAuth, async (req, res) => {
     const spot = await Spot.findByPk(req.params.spotId)
     const { url, preview } = req.body
     if (!spot) {
-        res.status(404).json({
+        return res.status(404).json({
             message: "Spot couldn't be found",
         })
     }
     if (spot.ownerId !== req.user.id) {
-        res.status(403).json({
+        return res.status(403).json({
             message: "Forbidden"
         })
     }
@@ -328,21 +287,20 @@ router.post('/:spotId/images', requireAuth, async (req, res) => {
     res.status(200).json(img)
 })
 
+//edit a spot
 
-
-
-//edit a Spot
-router.put('/:spotId', checkSpotDetails, requireAuth, async (req, res) => {
+router.put('/:spotId', requireAuth, checkSpotDetails, async (req, res) => {
     const spot = await Spot.findByPk(req.params.spotId)
+    const timeZone = 'EST'
     const { address, city, state, country, lat, lng, name, description, price } = req.body
     const { user } = req
     if (!spot) {
-        res.status(404).json({
+        return res.status(404).json({
             message: "Spot couldn't be found",
         })
     }
     if (spot.ownerId !== user.id) {
-        res.status(403).json({
+        return res.status(403).json({
             message: "Forbidden"
         })
     }
@@ -358,7 +316,10 @@ router.put('/:spotId', checkSpotDetails, requireAuth, async (req, res) => {
     spot.price = price
 
 
+
     await spot.save()
+    // spot.updatedAt = spot.updatedAt.toLocaleString('en-US', { timeZone });
+    // spot.createdAt = spot.createdAt.toLocaleString('en-US', { timeZone });
     res.status(200).json({
         id: spot.id,
         ownerId: spot.ownerId,
@@ -371,53 +332,37 @@ router.put('/:spotId', checkSpotDetails, requireAuth, async (req, res) => {
         name: spot.name,
         description: spot.description,
         price: spot.price,
-        updatedAt: spot.updatedAt.toLocaleString('en-US', { timeZone }),
-        createdAt: spot.createdAt.toLocaleString('en-US', { timeZone })
+        // updatedAt: spot.updatedAt.toLocaleString('en-US', { timeZone }),
+        // createdAt: spot.createdAt.toLocaleString('en-US', { timeZone })
 
     })
 })
 
 
+//delete a spot
 
-
-
-
-
-// delete a Spot
-router.delete("/:spotId", requireAuth, async (req, res) => {
-    let spot = await Spot.findByPk(req.params.id)
+router.delete('/:spotId', requireAuth, async (req, res) => {
+    let spot = await Spot.findByPk(req.params.spotId)
+    let { user } = req
     if (!spot) {
         res.status(404).json({
-            message: "Spot couldn't be found",
-            statusCode: 404
+            message: "Spot could not be found."
         })
     }
-    const { user } = req
     if (spot.ownerId !== user.id) {
-        res.json({
-            message: "Forbidden",
-            statusCode: 403
+        return res.status(403).json({
+            message: "Forbidden"
         })
     } else {
         await spot.destroy()
-        res.status(200).json({
+        return res.status(200).json({
             message: "Successfully deleted"
         })
     }
-
 })
 
 
-
-
-
-
-
-
-
-
-
-//Get Reviews by Spot Id---------------------------
+//Get all reviews by a Spot's id
 
 router.get('/:spotId/reviews', async (req, res) => {
     let spot = await Spot.findByPk(req.params.spotId)
@@ -447,22 +392,11 @@ router.get('/:spotId/reviews', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 // create a review for a spot based on spotId
 
 router.post('/:spotId/reviews', requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.spotId)
-
+    const timeZone = 'EST'
     if (!spot) {
         return res.status(404).json({ message: "Spot couldn't be found" })
     }
@@ -484,13 +418,16 @@ router.post('/:spotId/reviews', requireAuth, async (req, res) => {
 
     let errors = []
     if (!review) errors.push("Review text is required")
-    if (!stars) errors.push("Stars must be an integer from 1 to 5")
+    if (req.body.stars > 5 || req.body.stars < 1 || !stars) errors.push("Stars must be an integer from 1 to 5")
     if (errors.length) {
-        res.status(400).json({ message: "Validation error", errors })
+        res.status(400).json({
+            message: "Bad Request", errors: {
+                review: errors[0],
+                stars: errors[1]
+            }
+        })
         return
     }
-
-
     if (currRev) {
         return res.status(500).json({ message: "User already has a review for this spot" })
     } else {
@@ -498,8 +435,7 @@ router.post('/:spotId/reviews', requireAuth, async (req, res) => {
             userId: user.id,
             spotId, review, stars
         })
-        newRev.createdAt = newRev.createdAt.toLocaleString('en-US', { timeZone });
-        newRev.updatedAt = newRev.updatedAt.toLocaleString('en-US', { timeZone });
+
 
         return res.status(201).json({
             id: newRev.id,
@@ -507,66 +443,53 @@ router.post('/:spotId/reviews', requireAuth, async (req, res) => {
             spotId: newRev.spotId,
             review: newRev.review,
             stars: newRev.stars,
-            updatedAt: newRev.createdAt.toLocaleString('en-US', { timeZone }),
-            createdAt: newRev.updatedAt.toLocaleString('en-US', { timeZone })
+
         })
     }
+
 })
 
-
-
-
-
-
-
-//GET all current Bookings by Spot id
+// get all current bookings by spotId
 router.get('/:spotId/bookings', requireAuth, async (req, res) => {
-    let spot = await Spot.findByPk(req.params.id)
+    let spot = await Spot.findByPk(req.params.spotId)
     const { user } = req
-
+    const timeZone = 'EST'
     if (!spot) {
-        res.json({
-            message: "Spot couldn't be found",
-            statusCode: 404
-        })
+        return res.status(404).json({ message: "Spot couldn't be found" })
     }
 
     if (spot.ownerId === user.id) {
-        const bookings = await Booking.findAll({
-            where: {spotId: spot.id},
-            include: {model: User, attributes: ['id','firstName','lastName']},
+        const allBookings = await Booking.findAll({
+            where: { spotId: spot.id },
+            include: { model: User, attributes: ['id', 'firstName', 'lastName'] }
         })
-        res.status(200).json({Bookings: bookings})
-    }
+        const formattedBookings = allBookings.map(booking => ({
+            spotId: booking.spotId,
+            startDate: booking.startDate.toLocaleDateString(),
+            endDate: booking.endDate.toLocaleDateString()
+        }));
 
+        return res.status(200).json({ Bookings: formattedBookings });
+    }
     if (spot.ownerId !== user.id) {
-        const bookings = await Booking.findAll({
-            where: {spotId: spot.id},
+        const allBookings = await Booking.findAll({
+            where: { spotId: spot.id },
             attributes: ['spotId', 'startDate', 'endDate']
         })
-        res.status(200).json({Bookings: bookings})
+        const formattedBookings = allBookings.map(booking => ({
+            spotId: booking.spotId,
+            startDate: booking.startDate.toLocaleDateString('en-US', { timeZone }),
+            endDate: booking.endDate.toLocaleDateString('en-US', { timeZone })
+        }));
+
+        return res.status(200).json({ Bookings: formattedBookings });
     }
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Create a booking based on a spotId
 router.post('/:spotId/bookings', requireAuth, async (req, res) => {
     const { user } = req;
+    const timeZone = 'EST'
     const userId = user.id;
 
     const spot = await Spot.findByPk(req.params.spotId);
@@ -709,13 +632,7 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
         createdAt: newBooking.createdAt.toLocaleString('en-US', { timeZone }),
         updatedAt: newBooking.updatedAt.toLocaleString('en-US', { timeZone }),
     };
-
+    // await formattedBooking.save()
     res.json(formattedBooking);
 });
-
-
-
-
-
-
 module.exports = router

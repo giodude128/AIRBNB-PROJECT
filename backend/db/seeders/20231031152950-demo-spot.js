@@ -22,7 +22,7 @@ module.exports = {
         name: 'Gio',
         description: 'somewhere',
         price: 850000,
-        previewImage: 'its a SpotImage'
+        previewImage: 'image url'
       },
       {
         ownerId: 2,
@@ -35,7 +35,7 @@ module.exports = {
         name: 'Light',
         description: 'where',
         price: 650000,
-        previewImage: 'its a SpotImage'
+        previewImage: 'image url'
       },
       {
         ownerId: 3,
@@ -48,7 +48,7 @@ module.exports = {
         name: 'Z',
         description: 'idk',
         price: 950000,
-        previewImage: 'its a SpotImage'
+        previewImage: 'image url'
       }
     ], { validate: true });
   },

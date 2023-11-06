@@ -49,11 +49,12 @@ router.get('/current', requireAuth, async (req, res) => {
 router.post('/:reviewId/images', requireAuth, async (req, res) => {
     const review = await Review.findByPk(req.params.reviewId)
     const { user } = req
+    const timeZone = 'EST'
     if (!review) {
-        res.status(404).json({ message: "Review couldn't be found" })
+        return res.status(404).json({ message: "Review couldn't be found" })
     }
     if (review.userId !== user.id) {
-        res.status(400).json({ message: "Forbidden" })
+        return res.status(400).json({ message: "Forbidden" })
     }
     const spot = await Spot.findByPk(review.spotId)
     const { url, preview } = req.body
@@ -64,12 +65,21 @@ router.post('/:reviewId/images', requireAuth, async (req, res) => {
     if (preview === true) spot.previewImage = url
 
     if (otherRevImgs.length > 9) {
-        res.status(403).json({ message: "Maximum number of images for this resource was reached" })
+        return res.status(403).json({ message: "Maximum number of images for this resource was reached" })
     } else {
         let newRevImg = await review.createReviewImage({
             url, reviewId: req.params.reviewId
         })
-        res.status(200).json(newRevImg)
+        newRevImg.createdAt = newRevImg.createdAt.toLocaleString('en-US', { timeZone });
+        newRevImg.updatedAt = newRevImg.updatedAt.toLocaleString('en-US', { timeZone });
+        // await newRevImg.save()
+        res.status(200).json({
+            id: newRevImg.id,
+            url: newRevImg.url,
+            reviewId: newRevImg.reviewId,
+            updatedAt: newRevImg.createdAt.toLocaleString('en-US', { timeZone }),
+            createdAt: newRevImg.updatedAt.toLocaleString('en-US', { timeZone })
+        })
     }
 })
 
