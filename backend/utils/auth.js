@@ -8,7 +8,7 @@ const { secret, expiresIn } = jwtConfig;
 
 // Sends a JWT Cookie
 const setTokenCookie = (res, user) => {
-    // Create the token.
+    // CREATE TOKEN
     const safeUser = {
       id: user.id,
       email: user.email,
@@ -17,14 +17,14 @@ const setTokenCookie = (res, user) => {
     const token = jwt.sign(
       { data: safeUser },
       secret,
-      { expiresIn: parseInt(expiresIn) } // 604,800 seconds = 1 week
+      { expiresIn: parseInt(expiresIn) }
     );
 
     const isProduction = process.env.NODE_ENV === "production";
 
-    // Set the token cookie
+    // TOKEN COOKIE
     res.cookie('token', token, {
-      maxAge: expiresIn * 1000, // maxAge in milliseconds
+      maxAge: expiresIn * 1000,
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction && "Lax"
@@ -36,7 +36,7 @@ const setTokenCookie = (res, user) => {
 
 
 const restoreUser = (req, res, next) => {
-    // token parsed from cookies
+    // PARSING TOKEN
     const { token } = req.cookies;
     req.user = null;
 
