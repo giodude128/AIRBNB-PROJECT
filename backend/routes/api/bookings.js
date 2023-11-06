@@ -55,14 +55,13 @@ router.put("/:bookingId", requireAuth, async (req, res) => {
         return res.status(400).json({ message: "Bad Request", errors: errorObj });
     }
     // END BEFORE THE START DATE!!
-    if (brandNewEndDate <= brandNewStartDate) {
+    if (Object.keys(errorObj).length > 0) {
         return res.status(400).json({
             message: "Bad Request",
-            errors: {
-                endDate: "endDate cannot come before startDate"
-            }
+            errors: errorObj
         });
     }
+    
     // PAST THE DATE
     const currentDate = new Date().getTime();
     const testEndDate = new Date(endDate).getTime();
