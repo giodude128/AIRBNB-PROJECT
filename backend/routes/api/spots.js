@@ -453,12 +453,12 @@ router.get('/:spotId/bookings', requireAuth, async (req, res) => {
             where: { spotId: spot.id },
             attributes: ['spotId', 'startDate', 'endDate']
         })
+        const fixedTime = { timeZone: 'CET', year: 'numeric', month: '2-digit', day: '2-digit' }
         const changedBookings = allBooks.map(booking => ({
             spotId: booking.spotId,
-            startDate: booking.startDate.toLocaleDateString('en-US', { timeZone }),
-            endDate: booking.endDate.toLocaleDateString('en-US', { timeZone })
+            startDate: booking.startDate.toLocaleDateString('en-US', fixedTime),
+            endDate: booking.endDate.toLocaleDateString('en-US', fixedTime)
         }));
-
         return res.status(200).json({ Bookings: changedBookings });
     }
 })
@@ -597,17 +597,18 @@ router.post('/:spotId/bookings', requireAuth, async (req, res) => {
         });
     }
 
-
-
     body.userId = userId;
     body.spotId = spot.id;
 
     const newBooks = await Booking.create(body);
     await newBooks.save()
+
+    const options = { timeZone: 'CET', year: 'numeric', month: '2-digit', day: '2-digit' }
+
     const formattedBooking = {
         ...newBooks.dataValues,
-        startDate: newBooks.startDate.toLocaleDateString('en-US', { timeZone }),
-        endDate: newBooks.endDate.toLocaleDateString('en-US', { timeZone }),
+        startDate: newBooks.startDate.toLocaleDateString('en-US', options),
+        endDate: newBooks.endDate.toLocaleDateString('en-US', options),
         createdAt: newBooks.createdAt.toLocaleString('en-US', { timeZone }),
         updatedAt: newBooks.updatedAt.toLocaleString('en-US', { timeZone }),
     };
