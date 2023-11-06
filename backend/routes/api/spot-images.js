@@ -5,20 +5,20 @@ const router = express.Router()
 
 router.delete("/:imageId", requireAuth, async (req, res) => {
     const { user } = req
-    const img = await SpotImage.findByPk(req.params.imageId, {
+    const images = await SpotImage.findByPk(req.params.imageId, {
         include: { model: Spot, attributes: ['ownerId'] }
     })
-    if (!img || !img.Spot) {
+    if (!images || !images.Spot) {
         res.status(404).json({ message: "Spot Image couldn't be found" })
         return
     }
 
-    if (img.Spot.ownerId !== user.id) {
+    if (images.Spot.ownerId !== user.id) {
         res.status(403).json({ message: "Forbidden" })
         return
     }
 
-    await img.destroy()
+    await images.destroy()
     res.status(200).json({ message: "Successfully deleted" })
 })
 

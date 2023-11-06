@@ -11,7 +11,7 @@ const router = express.Router()
 
 router.get('/current', requireAuth, async (req, res) => {
     const { user } = req
-    const currUserRevs = await Review.findAll({
+    const currentUserReviews = await Review.findAll({
         where: {
             userId: user.id
         },
@@ -40,16 +40,16 @@ router.get('/current', requireAuth, async (req, res) => {
             }
         ]
     })
-    res.status(200).json({ Reviews: currUserRevs })
+    res.status(200).json({ Reviews: currentUserReviews })
 })
 
 
-//add an image to a review from reviewId
+//ADD IMAGE TO THE REVIEW BY USING THE REVIEW ID!!
 
 router.post('/:reviewId/images', requireAuth, async (req, res) => {
     const review = await Review.findByPk(req.params.reviewId)
     const { user } = req
-    const timeZone = 'EST'
+    const timezone = 'EST'
     if (!review) {
         return res.status(404).json({ message: "Review couldn't be found" })
     }
@@ -70,31 +70,29 @@ router.post('/:reviewId/images', requireAuth, async (req, res) => {
         let newRevImg = await review.createReviewImage({
             url, reviewId: req.params.reviewId
         })
-        newRevImg.createdAt = newRevImg.createdAt.toLocaleString('en-US', { timeZone });
-        newRevImg.updatedAt = newRevImg.updatedAt.toLocaleString('en-US', { timeZone });
-        // await newRevImg.save()
+        newRevImg.createdAt = newRevImg.createdAt.toLocaleString('en-US', { timezone });
+        newRevImg.updatedAt = newRevImg.updatedAt.toLocaleString('en-US', { timezone });
+
         res.status(200).json({
             id: newRevImg.id,
             url: newRevImg.url,
             reviewId: newRevImg.reviewId,
-            updatedAt: newRevImg.createdAt.toLocaleString('en-US', { timeZone }),
-            createdAt: newRevImg.updatedAt.toLocaleString('en-US', { timeZone })
+            updatedAt: newRevImg.createdAt.toLocaleString('en-US', { timezone }),
+            createdAt: newRevImg.updatedAt.toLocaleString('en-US', { timezone })
         })
     }
 })
 
 
 
-//edit a review
-
-
+// EDITING A REVIEW!!
 router.put('/:reviewId', requireAuth, async (req, res, next) => {
-    const revs = await Review.findByPk(req.params.reviewId)
+    const revvws = await Review.findByPk(req.params.reviewId)
     const { user } = req
-    if (!revs) {
+    if (!revvws) {
         return res.status(404).json({ message: "Review couldn't be found" })
     }
-    if (revs.userId !== user.id) {
+    if (revvws.userId !== user.id) {
         return res.status(403).json({ message: "Forbidden" })
     }
 
@@ -112,25 +110,25 @@ router.put('/:reviewId', requireAuth, async (req, res, next) => {
             }
         })
     }
-    revs.review = review
-    revs.stars = stars
-    await revs.save()
-    res.status(200).json(revs)
+    revvws.review = review
+    revvws.stars = stars
+    await revvws.save()
+    res.status(200).json(revvws)
 })
 
 
-//delete a review
+// DELETING A REVIEW!!
 
 router.delete('/:reviewId', requireAuth, async (req, res) => {
-    let review = await Review.findByPk(req.params.reviewId)
+    let reviewids = await Review.findByPk(req.params.reviewId)
     const { user } = req
-    if (!review) {
+    if (!reviewids) {
         res.status(404).json({ message: "Review couldn't be found" })
     }
-    if (review.userId !== user.id) {
+    if (reviewids.userId !== user.id) {
         res.status(400).json({ message: "Forbidden" })
     }
-    await review.destroy()
+    await reviewids.destroy()
     res.status(200).json({ message: "Successfully deleted" })
 })
 
