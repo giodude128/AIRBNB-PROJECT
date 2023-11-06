@@ -463,7 +463,7 @@ router.get('/:spotId/bookings', requireAuth, async (req, res) => {
     }
 })
 
-// Create a booking based on a spotId
+// CREATE BOOKING BASED ON SPOT ID
 router.post('/:spotId/bookings', requireAuth, async (req, res) => {
     const { user } = req;
     const timeZone = 'EST';
