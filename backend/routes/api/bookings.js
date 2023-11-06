@@ -7,6 +7,7 @@ const { Op } = require("sequelize")
 //GET ALL BOOKINGS BY THE CURRENT USER
 router.get('/current', requireAuth, async (req, res) => {
     const { user } = req
+    const timeZone = 'America/New_York'
     const currUserBooks = await Booking.findAll({
         where: { userId: user.id },
         include: {
@@ -21,7 +22,15 @@ router.get('/current', requireAuth, async (req, res) => {
         spot.lng = parseFloat(spot.lng);
         spot.price = parseFloat(spot.price);
     });
-    res.status(200).json({ Bookings: currUserBooks })
+    const fixedTime = { timeZone: 'CET', year: 'numeric', month: '2-digit', day: '2-digit' }
+    const fixedCurrentBookings = currUserBooks.map((booking) => ({
+        ...booking.toJSON(),
+        startDate: booking.startDate.toLocaleDateString('en-US', fixedTime),
+        endDate: booking.endDate.toLocaleDateString('en-US', fixedTime),
+        updatedAt: booking.updatedAt.toLocaleString('en-US', { timeZone }),
+        createdAt: booking.createdAt.toLocaleString('en-US', { timeZone })
+    }))
+    res.status(200).json({ Bookings: fixedCurrentBookings })
 })
 
 // EDIT THE BOOKINGS!!
@@ -29,7 +38,7 @@ router.put("/:bookingId", requireAuth, async (req, res) => {
     const { startDate, endDate } = req.body;
     const { bookingId } = req.params;
     const { user } = req;
-    const timeZone = 'EST'
+    const timeZone = 'EST';
     const brandNewStartDate = new Date(startDate).getTime();
     const brandNewEndDate = new Date(endDate).getTime();
 
@@ -115,10 +124,13 @@ router.put("/:bookingId", requireAuth, async (req, res) => {
                 endDate
             });
             await booking.save()
+
+            const fixedTime = { timeZone: 'CET', year: 'numeric', month: '2-digit', day: '2-digit' }
+
             const formatBooks = {
                 ...booking.toJSON(),
-                startDate: booking.startDate.toLocaleDateString('en-US', { timeZone }),
-                endDate: booking.endDate.toLocaleDateString('en-US', { timeZone }),
+                startDate: booking.startDate.toLocaleDateString('en-US', fixedTime),
+                endDate: booking.endDate.toLocaleDateString('en-US', fixedTime),
                 updatedAt: booking.updatedAt.toLocaleString('en-US', { timeZone }),
                 createdAt: booking.createdAt.toLocaleString('en-US', { timeZone })
             }

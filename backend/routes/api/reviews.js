@@ -11,6 +11,7 @@ const router = express.Router()
 
 router.get('/current', requireAuth, async (req, res) => {
     const { user } = req
+    const timeZone = 'EST'
     const currentUserReviews = await Review.findAll({
         where: {
             userId: user.id
@@ -40,7 +41,18 @@ router.get('/current', requireAuth, async (req, res) => {
             }
         ]
     })
-    res.status(200).json({ Reviews: currentUserReviews })
+    currentUserReviews.forEach((review) => {
+        const spot = review.Spot;
+        spot.lat = parseFloat(spot.lat);
+        spot.lng = parseFloat(spot.lng);
+        spot.price = parseFloat(spot.price);
+    });
+    const fixedReviews = currentUserReviews.map((review) => ({
+        ...review.toJSON(),
+        createdAt: review.createdAt.toLocaleString('en-US', { timeZone }),
+        updatedAt: review.updatedAt.toLocaleString('en-US', { timeZone }),
+    }));
+    res.status(200).json({ Reviews: fixedReviews })
 })
 
 
@@ -49,7 +61,7 @@ router.get('/current', requireAuth, async (req, res) => {
 router.post('/:reviewId/images', requireAuth, async (req, res) => {
     const review = await Review.findByPk(req.params.reviewId)
     const { user } = req
-    const timezone = 'EST'
+    const timezone = 'EST';
     if (!review) {
         return res.status(404).json({ message: "Review couldn't be found" })
     }
@@ -89,6 +101,7 @@ router.post('/:reviewId/images', requireAuth, async (req, res) => {
 router.put('/:reviewId', requireAuth, async (req, res, next) => {
     const revvws = await Review.findByPk(req.params.reviewId)
     const { user } = req
+    const timeZone = 'EST'
     if (!revvws) {
         return res.status(404).json({ message: "Review couldn't be found" })
     }
@@ -113,7 +126,12 @@ router.put('/:reviewId', requireAuth, async (req, res, next) => {
     revvws.review = review
     revvws.stars = stars
     await revvws.save()
-    res.status(200).json(revvws)
+    const formatRevs = {
+        ...revvws.toJSON(),
+        updatedAt: revvws.updatedAt.toLocaleString('en-US', { timeZone }),
+        createdAt: revvws.createdAt.toLocaleString('en-US', { timeZone })
+    }
+    res.status(200).json(formatRevs)
 })
 
 
