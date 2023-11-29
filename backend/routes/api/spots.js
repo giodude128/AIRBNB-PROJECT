@@ -432,36 +432,27 @@ router.post('/:spotId/reviews', requireAuth, async (req, res) => {
 router.get('/:spotId/bookings', requireAuth, async (req, res) => {
     let spot = await Spot.findByPk(req.params.spotId)
     const { user } = req
-    const timeZone = 'EST';
+
     if (!spot) {
-        return res.status(404).json({ message: "Spot couldn't be found" })
+        res.status(404).json({ message: "Spot couldn't be found" })
     }
+
     if (spot.ownerId === user.id) {
-        const allBooks = await Booking.findAll({
+        const allBookings = await Booking.findAll({
             where: { spotId: spot.id },
             include: { model: User, attributes: ['id', 'firstName', 'lastName'] }
         })
-        const changedBookings = allBooks.map(booking => ({
-            spotId: booking.spotId,
-            startDate: booking.startDate.toLocaleDateString(),
-            endDate: booking.endDate.toLocaleDateString()
-        }));
-        return res.status(200).json({ Bookings: changedBookings });
+        res.status(200).json({ Bookings: allBookings })
     }
     if (spot.ownerId !== user.id) {
-        const allBooks = await Booking.findAll({
+        const allBookings = await Booking.findAll({
             where: { spotId: spot.id },
             attributes: ['spotId', 'startDate', 'endDate']
         })
-        const fixedTime = { timeZone: 'CET', year: 'numeric', month: '2-digit', day: '2-digit' }
-        const changedBookings = allBooks.map(booking => ({
-            spotId: booking.spotId,
-            startDate: booking.startDate.toLocaleDateString('en-US', fixedTime),
-            endDate: booking.endDate.toLocaleDateString('en-US', fixedTime)
-        }));
-        return res.status(200).json({ Bookings: changedBookings });
+        res.status(200).json({ Bookings: allBookings })
     }
 })
+
 
 // CREATE BOOKING BASED ON SPOT ID
 router.post('/:spotId/bookings', requireAuth, async (req, res) => {
