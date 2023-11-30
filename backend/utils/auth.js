@@ -65,6 +65,12 @@ const requireAuth = function (req, _res, next) {
     err.title = 'Authentication required';
     err.errors = { message: 'Authentication required' };
     err.status = 401;
+    
+    Object.defineProperty(err, 'stack', {
+      configurable: true,
+      enumerable: false,
+      value: undefined
+  });
     return next(err);
 }
 
