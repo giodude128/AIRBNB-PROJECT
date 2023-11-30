@@ -66,10 +66,8 @@ next(err);
 
 app.use((err, _req, res, _next) => {
 res.status(err.status || 500);
-// console.error(err);
-const { stack, ...rest } = err;
+console.error(err);
 res.json({
-  ...rest,
   title: err.title || 'Server Error',
   message: err.message,
   errors: err.errors,
