@@ -44,11 +44,11 @@ module.exports = {
         city: 'Cypress',
         state: 'CA',
         country: 'USA',
-        lat: 26.56,
-        lng: 86.34,
+        lat: 31.5,
+        lng: 42.5,
         name: 'Z',
         description: 'idk',
-        price: 950000,
+        price: 95,
         previewImage: 'image url'
       }
     ], { validate: true });
