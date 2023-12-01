@@ -137,19 +137,42 @@ router.put('/:reviewId', requireAuth, async (req, res, next) => {
 
 // DELETING A REVIEW!!
 
+// router.delete('/:reviewId', requireAuth, async (req, res) => {
+//     let review = await Review.findByPk(req.params.reviewId)
+//     const { user } = req
+//     if (!review) {
+//         res.status(404).json({ message: "Review couldn't be found" })
+//         return
+//     }
+//     if (review.userId !== user.id) {
+//         res.status(403).json({ message: "Forbidden" })
+//         return
+//     }
+//     await review.destroy()
+//     res.status(200).json({ message: "Successfully deleted" })
+// })
+
+
 router.delete('/:reviewId', requireAuth, async (req, res) => {
-    let review = await Review.findByPk(req.params.reviewId)
-    const { user } = req
-    if (!review) {
-        res.status(404).json({ message: "Review couldn't be found" })
-        return
+    try {
+        let review = await Review.findByPk(req.params.reviewId);
+        const { user } = req;
+
+        if (!review) {
+            return res.status(404).json({ message: "Review couldn't be found" });
+        }
+
+        if (review.userId !== user.id) {
+            return res.status(403).json({ message: "Forbidden" });
+        }
+
+        await review.destroy();
+        return res.status(200).json({ message: "Successfully deleted" });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
     }
-    if (review.userId !== user.id) {
-        res.status(403).json({ message: "Forbidden" })
-        return
-    }
-    await review.destroy()
-    res.status(200).json({ message: "Successfully deleted" })
-})
+});
+
+
 
 module.exports = router
