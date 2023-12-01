@@ -45,7 +45,7 @@ module.exports = {
         state: 'CA',
         country: 'USA',
         lat: 31.5,
-        lng: 42.5,
+        lng: 32.5,
         name: 'Z',
         description: 'idk',
         price: 95,
